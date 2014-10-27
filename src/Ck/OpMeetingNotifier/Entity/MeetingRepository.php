@@ -13,9 +13,10 @@ class MeetingRepository extends EntityRepository
     {
         if ($after === null)
             $after = new \DateTime();
+
         $query = $this
                     ->createQueryBuilder('m')
-                    ->andWhere('m.start_time >= :before')
+                    ->andWhere('m.start_time >= :after')
                     ->setParameter('after', $after)
         ;
 

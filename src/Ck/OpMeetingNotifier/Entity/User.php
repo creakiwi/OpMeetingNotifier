@@ -40,7 +40,7 @@ class User
     /**
      * @var string
      * 
-     * @ORM\Column(name="email", type="string", length=60)
+     * @ORM\Column(name="mail", type="string", length=60)
      */
     private $email;
 

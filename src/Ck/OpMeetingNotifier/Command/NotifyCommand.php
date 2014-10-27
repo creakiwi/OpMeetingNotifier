@@ -39,9 +39,7 @@ class NotifyCommand extends Command
     {
         $in10days = new \DateTime();
         $in10days->modify('+10 days');
-        $future_meetings    = $this->em->getRepository('Ck\OpMeetingNotifier\Entity\Meeting')->findStartingAfter(null, $in10days);
-        $title              = $meeting->getTitle();
-        $start_date         = $meeting->getStartTime()->format($this->config['op_meeting_notifier']['date_format']);
+        $future_meetings    = $this->em->getRepository('Ck\OpMeetingNotifier\Entity\Meeting')->findStartingAfterAndBefore(null, $in10days);
 
         foreach ($future_meetings as $meeting)
             $this->handleMeeting($meeting);
@@ -49,16 +47,23 @@ class NotifyCommand extends Command
 
     protected function handleMeeting(Meeting $meeting)
     {
+        $title      = $meeting->getTitle();
+        $date       = $meeting->getStartTime();
+        $date->setTimezone(new \DateTimeZone('Europe/London'));
+        $date->setTimezone(new \DateTimeZone('Europe/Paris'));
+        $start_date = $date->format($this->config['op_meeting_notifier']['date_format']);
+        $project_name = $meeting->getProject()->getName();
+        $transport  = \Swift_SendmailTransport::newInstance('/usr/sbin/sendmail -bs');
+        $mailer     = \Swift_Mailer::newInstance($transport);
         $subject    = sprintf('%sMeeting "%s" scheduled on %s', 
                                 $this->config['op_meeting_notifier']['subject_prefix'],
-                                $meeting->getTitle(),
-                                $meeting->getStartTime()->format($this->config['op_meeting_notifier']['date_format']));
-
+                                $title, $start_date);
 $content = <<<EOT
 Hello,
 
-You have been invited to the following meeting : $meeting->getTitle(),
-Start time: $meeting->getStartTime()->format($this->config['op_meeting_notifier']['date_format'])
+You have been invited to the following meeting: $title
+Project : $project_name
+Start time: $start_date
         
 Please refer to the openproject interface for furthermore informations.
         
@@ -67,9 +72,12 @@ Your devoted OpMeetingNotifier.
 EOT;
 
         $msg = \Swift_Message::newInstance()
-                ->addTo($meeting->getEmails())
+                ->setTo($meeting->getEmails())
+                ->setSubject($subject)
                 ->addFrom($this->config['op_meeting_notifier']['from'])
                 ->addReplyTo($this->config['op_meeting_notifier']['reply_to'])
-                ->setBody('');
+                ->setBody($content);
+
+        $mailer->send($msg);
     }
 }
