@@ -1,8 +1,13 @@
+op_meeting_notifier:
+    from:           openproject@mysite.com
+    reply:          noreply@mysite.com
+    subject_prefix: '[OP] '
+    date_format:    'd/m/Y H:i'
 env:
-    prod: false
+    prod: true
 doctrine:
     dbal:
-        driver: pdo_mysql
-        user: root
-        password: lol
-        dbname: openproject
+        driver:     pdo_mysql
+        user:       user
+        password:   password
+        dbname:     openproject

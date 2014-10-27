@@ -10,7 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
  * @author Alexandre ANDRE
  * 
  * @ORM\Table(name="meetings")
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="Ck\OpMeetingNotifier\Entity\MeetingRepository")
  */
 class Meeting
 {
@@ -81,10 +81,10 @@ class Meeting
      */
     private $project;
 
-    /*
+    /**
      * @var \Ck\OpMeetingNotifier\Entity\Participant
      * 
-     * ORM\OneToMany(targetEntity="Ck\OpMeetingNotifier\Entity\Participant", mappedBy="meeting")
+     * @ORM\OneToMany(targetEntity="Ck\OpMeetingNotifier\Entity\Participant", mappedBy="meeting")
      */
     private $participants;
 
@@ -280,5 +280,60 @@ class Meeting
     public function getProject()
     {
         return $this->project;
+    }
+
+    public function getEmails()
+    {
+        $emails = array();
+
+        foreach ($this->getParticipants() as $participant) {
+            if ($participant->getUser() !== null)
+                $emails[] = $participant->getUser()->getEmail();
+            else
+                $emails[] = $participant->getEmail();
+        }
+
+        return array_unique($emails);
+    }
+
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        $this->participants = new \Doctrine\Common\Collections\ArrayCollection();
+    }
+
+    /**
+     * Add participants
+     *
+     * @param \Ck\OpMeetingNotifier\Entity\Participant $participants
+     * @return Meeting
+     */
+    public function addParticipant(\Ck\OpMeetingNotifier\Entity\Participant $participants)
+    {
+        $this->participants[] = $participants;
+
+        return $this;
+    }
+
+    /**
+     * Remove participants
+     *
+     * @param \Ck\OpMeetingNotifier\Entity\Participant $participants
+     */
+    public function removeParticipant(\Ck\OpMeetingNotifier\Entity\Participant $participants)
+    {
+        $this->participants->removeElement($participants);
+    }
+
+    /**
+     * Get participants
+     *
+     * @return \Doctrine\Common\Collections\Collection 
+     */
+    public function getParticipants()
+    {
+        return $this->participants;
     }
 }
